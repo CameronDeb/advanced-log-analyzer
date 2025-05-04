@@ -1,0 +1,41 @@
+{
+    "log_pattern": "^(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})\\s*\\|\\s*(?P<level>INFO|WARN|ERROR|DEBUG|CRITICAL)\\s*\\|\\s*(?P<ip>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|localhost|-)\\s*\\|\\s*(?P<message>.*)$",
+    "anomaly_rules": [
+      {
+        "name": "Excessive Failed Logins per IP",
+        "enabled": true,
+        "log_level": "ERROR",
+        "message_pattern": "login failed",
+        "group_by": "ip",
+        "threshold": 5,
+        "window_minutes": 5
+      },
+      {
+        "name": "High Overall Error Rate",
+        "enabled": true,
+        "log_level": "ERROR",
+        "group_by": null,
+        "threshold": 10,
+        "window_minutes": 10
+      },
+      {
+          "name": "Frequent Specific Error Message",
+          "enabled": true,
+          "log_level": "ERROR",
+          "message_pattern": "database connection timeout",
+          "group_by": null,
+          "threshold": 3,
+          "window_minutes": 15
+      },
+      {
+          "name": "Log Volume Spike",
+          "enabled": true,
+          "log_level": null,
+          "group_by": null,
+          "threshold_factor": 3.0,
+          "window_minutes": 5,  
+          "baseline_window_minutes": 60
+      }
+    ]
+  }
+  
