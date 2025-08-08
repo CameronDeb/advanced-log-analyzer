@@ -5,16 +5,13 @@ from collections import defaultdict, deque
 from datetime import datetime, timedelta
 import statistics # For moving average calculation
 
-# --- Global State (Consider more robust state management for production) ---
-# Stores timestamps for different rule checks. Structure:
-# state_data[rule_name][group_key] = deque([(timestamp, count)]) # Using deque for efficient windowing
+
 state_data = defaultdict(lambda: defaultdict(deque))
 # For volume spike rule, store all timestamps in baseline window
 volume_baseline_timestamps = deque()
 volume_current_timestamps = deque()
 
 
-# --- Helper Functions ---
 
 def load_config(config_path):
     """Loads configuration from a JSON file."""
@@ -49,27 +46,26 @@ def parse_log_line(line, regex_pattern):
         except ValueError:
             # print(f"Warning: Invalid timestamp format in line: {line.strip()}")
             return None
-    return None # Skip lines that don't match
+    return None 
 
 def update_state_and_check_anomalies(log_entry, config):
     """Updates state based on the log entry and checks all enabled rules."""
     anomalies_found = []
     current_time = log_entry['timestamp']
 
-    # --- Update state for Log Volume Spike Rule ---
+
     volume_rule = next((rule for rule in config['anomaly_rules'] if rule['name'] == "Log Volume Spike" and rule['enabled']), None)
     if volume_rule:
         baseline_window = timedelta(minutes=volume_rule['baseline_window_minutes'])
         current_window = timedelta(minutes=volume_rule['window_minutes'])
-
-        # Add current timestamp to both deques
+        
         volume_baseline_timestamps.append(current_time)
         volume_current_timestamps.append(current_time)
 
-        # Prune old timestamps from baseline deque
+   
         while volume_baseline_timestamps and current_time - volume_baseline_timestamps[0] > baseline_window:
             volume_baseline_timestamps.popleft()
-        # Prune old timestamps from current window deque
+    
         while volume_current_timestamps and current_time - volume_current_timestamps[0] > current_window:
             volume_current_timestamps.popleft()
 
@@ -85,12 +81,11 @@ def update_state_and_check_anomalies(log_entry, config):
                   anomalies_found.append({"rule": volume_rule['name'], "message": anomaly_msg})
 
 
-    # --- Check other configured rules ---
+    
     for rule in config['anomaly_rules']:
-        if not rule['enabled'] or rule['name'] == "Log Volume Spike": # Skip disabled or volume rule (handled above)
+        if not rule['enabled'] or rule['name'] == "Log Volume Spike": # Skip disabled or volume rule 
             continue
 
-        # Check if the log entry matches the rule's level and message pattern (if specified)
         level_match = (rule['log_level'] is None or log_entry['level'] == rule['log_level'])
         message_pattern = rule.get('message_pattern')
         message_match = (message_pattern is None or
@@ -123,11 +118,10 @@ def update_state_and_check_anomalies(log_entry, config):
                                f"{len(timestamps_deque)} events{group_info} "
                                f"in the last {window}.")
                 anomalies_found.append({"rule": rule_name, "message": anomaly_msg})
-                # Optional: Implement logic to report only once per threshold breach within a cooldown period
+               
 
     return anomalies_found
 
-# --- Main Processing Logic ---
 
 def process_log_file(filepath, config):
     """Reads and processes the log file line by line using the loaded config."""
@@ -165,7 +159,6 @@ def process_log_file(filepath, config):
         return
     except Exception as e:
         print(f"An unexpected error occurred during processing: {e}")
-        # Consider logging the traceback for debugging
         import traceback
         traceback.print_exc()
         return
@@ -179,7 +172,6 @@ def process_log_file(filepath, config):
     print("------------------------\n")
 
 
-# --- Script Entry Point ---
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Advanced Log File Anomaly Detector.")
     parser.add_argument("logfile", help="Path to the log file to analyze.")
